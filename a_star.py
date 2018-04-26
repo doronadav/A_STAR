@@ -80,7 +80,9 @@ class AStar:
     def a_star(self, source, goal, grid, algo_type=0):
         current = source
         cost = -1
-        self.open_list.put(current)
+
+        self.open_list.put(current, 0)
+
         while not self.open_list.empty():
             current = self.open_list.get()
             if current == goal:
@@ -93,7 +95,7 @@ class AStar:
                 if neighbor in self.closed_list:
                     continue
                 f = neighbor.g + self.heuristic_func(neighbor, goal)
-                self.open_list.put(f)
-                # if algo_type != 1 or (algo_type == 1 and self.late_goal_test(neighbor, goal, f, cost)):
+                self.open_list.put(neighbor, f)
+
 
             self.closed_list.append(current)
