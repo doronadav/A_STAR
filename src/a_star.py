@@ -1,5 +1,6 @@
 from Queue import PriorityQueue
 from copy import deepcopy
+import heapq
 
 N = 4
 
@@ -19,16 +20,13 @@ def can_move_up(index):
 def can_move_down(index):
     return not index / N == N - 1
 
-
-def manhattan(board):
-    return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
-
-
 class State(object):
-    def __init__(self, value, parent, g=0):
+    def __init__(self, value, parent, blank_index, g=0):
         self.children = []
         self.parent = parent
-        self.value = value              # list representing the board
+        self.value = tuple(value)              # list representing the board
+        self.closed = False
+        self.blank_index = blank_index
         if parent:
             self.path = parent.path[:]
             self.path.append(value)
@@ -37,86 +35,101 @@ class State(object):
             self.g = g
             self.path = [value]
 
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __hash__(self):
+        return hash(self.value)
+
     def calc_children(self):
-        [index_0] = [i for i, val in enumerate(self.value) if not val]
-        if can_move_left(index_0):
-            new_board = deepcopy(self.value)
-            new_board[index_0], new_board[index_0 - 1] = new_board[index_0 - 1], new_board[index_0]
-            self.children.append(State(value=new_board, parent=self))
-        if can_move_right(index_0):
-            new_board = deepcopy(self.value)
-            new_board[index_0], new_board[index_0 + 1] = new_board[index_0 + 1], new_board[index_0]
-            self.children.append(State(value=new_board, parent=self))
-        if can_move_up(index_0):
-            new_board = deepcopy(self.value)
-            new_board[index_0], new_board[index_0 - N] = new_board[index_0 - N], new_board[index_0]
-            self.children.append(State(value=new_board, parent=self))
-        if can_move_down(index_0):
-            new_board = deepcopy(self.value)
-            new_board[index_0], new_board[index_0 + N] = new_board[index_0 + N], new_board[index_0]
-            self.children.append(State(value=new_board, parent=self))
+        #[index_0] = [i for i, val in enumerate(self.value) if not val]
+        if can_move_left(self.blank_index):
+            new_board = list(self.value)
+            new_board[self.blank_index], new_board[self.blank_index - 1] = new_board[self.blank_index - 1], new_board[self.blank_index]
+            yield State(value=new_board, blank_index=self.blank_index-1, parent=self)
+        if can_move_right(self.blank_index):
+            new_board = list(self.value)
+            new_board[self.blank_index], new_board[self.blank_index + 1] = new_board[self.blank_index + 1], new_board[self.blank_index]
+            yield State(value=new_board,blank_index=self.blank_index+1, parent=self)
+        if can_move_up(self.blank_index):
+            new_board = list(self.value)
+            new_board[self.blank_index], new_board[self.blank_index - N] = new_board[self.blank_index - N], new_board[self.blank_index]
+            yield State(value=new_board, blank_index=self.blank_index-N, parent=self)
+        if can_move_down(self.blank_index):
+            new_board = list(self.value)
+            new_board[self.blank_index], new_board[self.blank_index + N] = new_board[self.blank_index + N], new_board[self.blank_index]
+            yield State(value=new_board, blank_index=self.blank_index+N, parent=self)
 
 
 class AStar:
 
     def __init__(self):
-        self.n = N
-        self.open_list = PriorityQueue()
+        self.h_dict = dict()
         self.closed_dict = dict()
-        self.uniqueness_dict = dict()
+        self.open_list_length = 1
 
-    def heuristic_func(self, node):
-        return manhattan(node)
+    def heuristic_func(self, board):
+        return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
 
-    def a_star(self, source, goal):
-        current = source
+    def a_star(self, start, goal):
 
         # For our case we must put a tuple in the queue to make sure
         # the get will return the state (board) with the smallest f.
-        self.open_list.put((0, current))
-        self.uniqueness_dict[str(current.value)] = current
+        start_data = [self.heuristic_func(start.value), 0, start, None]
+        self.open_dict = {start: start_data}
+        self.open_heap = [start_data]
 
-        while not self.open_list.empty():
-            _, current = self.open_list.get()
+        while self.open_heap:
+            current_data = heapq.heappop(self.open_heap)
+            f_curr, g_curr, current, parent_data = current_data
 
             if current.value == goal:
+                print "Open list length {}".format(self.open_list_length)
                 return current
 
-            current.calc_children()
-            for neighbor in current.children:
-                if self.closed_dict.has_key(str(neighbor.value)):
-                # if neighbor.value in self.closed_list:
+            del self.open_dict[current]
+            self.closed_dict[current] = 1
+            # if current.closed or str(current.value) in self.closed_dict:
+            #    continue
+
+            for neighbor in current.calc_children():
+                #neighbor_str = str(neighbor.value)
+                if neighbor in self.closed_dict:
                     continue
-                h = self.heuristic_func(neighbor.value)
-                f = neighbor.g + h
-                # self.open_list.put((f, neighbor))
-                val = self.uniqueness_dict.get(str(neighbor.value), None)
-                if val is None:
-                    # case 1 - first insertion
-                    self.open_list.put((f, neighbor))
-                    self.uniqueness_dict[str(neighbor.value)] = neighbor
-                    print 'inserted {} with heuristic_func: {}'.format(neighbor.value, h)
-                elif val.g < neighbor.g:
-                    self.update_open_list_state(f, neighbor)
 
-            self.closed_dict[str(current.value)] = 1
-            # self.closed_list.append(current.value)
-            self.uniqueness_dict.pop(str(current.value))
-        else:
-            source.path = []
-            return 'Board: {}  is not a valid board'.format(source.value)
+                h_val = self.h_dict.get(neighbor, None)
+                if h_val is None:
+                    h_val = self.heuristic_func(neighbor.value)
+                    self.h_dict[neighbor] = h_val
+                f = neighbor.g + h_val
+                neighbor_data = [f, neighbor.g, neighbor, current_data]
 
-    def update_open_list_state(self, new_f, new_state):
-        res = []
-        while not self.open_list.empty():
-            priority, state = self.open_list.get()
-            if state.value == new_state.value:
-                if new_f < priority:
-                    self.open_list.put((new_f, new_state))
+                if neighbor not in self.open_dict:
+                    self.open_dict[neighbor] = neighbor_data
+                    heapq.heappush(self.open_heap, neighbor_data)
+                    self.open_list_length += 1
+                    #print "insert node {} with f {},  h {}".format(neighbor.value, f, h_val)
                 else:
-                    self.open_list.put((priority, state))
-                for p, s in res:
-                    self.open_list.put((p, s))
-                return
-            else:
-                res.append((priority, state))
+                    old_neighbor_data = self.open_dict[neighbor]
+                    if neighbor_data < old_neighbor_data:
+                        old_neighbor_data[:] = neighbor_data
+                        heapq.heapify(self.open_dict)
+
+
+        #         val = self.open_dict.get(neighbor, None)
+        #         if val is None:
+        #             # case 1 - first insertion
+        #             heapq.heappush(self.open_heap, (f, neighbor.g, neighbor))
+        #             self.open_dict[neighbor] = neighbor
+        #         elif val.g > neighbor.g:
+        #             val.closed = True
+        #             self.open_dict[neighbor_str] = neighbor
+        #             heapq.heappush(self.open_heap, (f, neighbor.g, neighbor))
+        #         print "inserting to open list {} with h {}".format(, h_val)
+        #
+        #     current.closed = True
+        #     self.closed_dict[str(current.value)] = 1
+        #     self.open_dict.pop(str(current.value))
+        else:
+            start.path = []
+            return 'Board: {}  is not a valid board'.format(start)
