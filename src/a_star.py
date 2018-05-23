@@ -66,11 +66,12 @@ class AStar:
         self.open_dict = dict()
         self.open_heap = dict()
         self.open_list_length = 1
+        self.suspected_goal = None
 
     def heuristic_func(self, board):
         return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
 
-    def a_star(self, start, goal):
+    def search_late_goal_test(self, start, goal):
 
         # For our case we must put a tuple in the queue to make sure
         # the get will return the state (board) with the smallest f.
@@ -97,6 +98,51 @@ class AStar:
                     h_val = self.heuristic_func(neighbor.value)
                     self.h_dict[neighbor] = h_val
                 f = neighbor.g + h_val
+                neighbor_data = [f, neighbor.g, neighbor, current_data]
+
+                if neighbor not in self.open_dict:
+                    self.open_dict[neighbor] = neighbor_data
+                    heapq.heappush(self.open_heap, neighbor_data)
+                    self.open_list_length += 1
+                else:
+                    old_neighbor_data = self.open_dict[neighbor]
+                    if neighbor_data < old_neighbor_data:
+                        old_neighbor_data[:] = neighbor_data
+                        heapq.heapify(self.open_dict)
+        else:
+            start.path = []
+            return 'Board: {}  is not a valid board'.format(start)
+
+    def search_early_goal_test(self, start, goal):
+        start_data = [self.heuristic_func(start.value), 0, start, None]
+        self.open_dict = {start: start_data}
+        self.open_heap = [start_data]
+
+        while self.open_heap:
+            current_data = heapq.heappop(self.open_heap)
+            f_curr, g_curr, current, parent_data = current_data
+
+            if current.value == goal:
+                return current, self.open_list_length
+
+            del self.open_dict[current]
+            self.closed_dict[current] = 1
+
+            for neighbor in current.calc_children():
+                if neighbor in self.closed_dict:
+                    continue
+
+                if neighbor.value == goal:  # Early goal test
+                    if self.suspected_goal is None or neighbor.g < self.suspected_goal.g:
+                        self.suspected_goal = neighbor
+
+                h_val = self.h_dict.get(neighbor, None)
+                if h_val is None:
+                    h_val = self.heuristic_func(neighbor.value)
+                    self.h_dict[neighbor] = h_val
+                f = neighbor.g + h_val
+                if self.suspected_goal is not None and self.suspected_goal!=neighbor and not f < self.suspected_goal.g:
+                    continue    # Early goal test - found a smaller path to goal not inserting neighbour to open list.
                 neighbor_data = [f, neighbor.g, neighbor, current_data]
 
                 if neighbor not in self.open_dict:
