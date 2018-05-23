@@ -11,7 +11,8 @@ def main():
     file_path = dir_path + '/states15_b.d'
     goal = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
     try:
-        output = open("A_Star_Output_late_goal_test.output", "w")
+        output = open("A_Star_Output_early_goal_test.output", "w")
+        # output = open("A_Star_Output_late_goal_test.output", "w")
         output.write('Staring calculation:\n')
         with open(file_path, "r") as states_file:
             index = 0
@@ -25,12 +26,14 @@ def main():
 
                 start = time.time()
                 algo = AStar()
-                res_board, open_list_size = algo.a_star(source, goal)
+                res_board, open_list_size = algo.search_early_goal_test(source, goal)
+                # res_board, open_list_size = algo.search_late_goal_test(source, goal)
                 end = time.time()
                 output.write('Goal Found! Length of path: {} \n'.format(len(res_board.path)))
                 # output.write('Path to goal is : {}\n'.format(res_board.path))
                 output.write('Time it took to calculate board num {} is: {} seconds\n'.format(index, end - start))
                 output.write('Size of open list is: {}\n'.format(open_list_size))
+                print 'Finished board number {}, open list size was: {}'.format(index, open_list_size)
         output.close()
     except Exception as e:
         print e.message
