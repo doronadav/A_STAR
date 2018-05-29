@@ -18,6 +18,7 @@ def can_move_up(index):
 def can_move_down(index):
     return not index / N == N - 1
 
+
 class State(object):
     def __init__(self, value, parent, blank_index, g=0):
         self.children = []
@@ -72,16 +73,16 @@ class AStar:
         return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
 
     def search_late_goal_test(self, start, goal):
-
         # For our case we must put a tuple in the queue to make sure
         # the get will return the state (board) with the smallest f.
-        start_data = [self.heuristic_func(start.value), 0, start, None]
+        fifo_queue_index = 0
+        start_data = [self.heuristic_func(start.value), fifo_queue_index, start, None]
         self.open_dict = {start: start_data}
         self.open_heap = [start_data]
 
         while self.open_heap:
             current_data = heapq.heappop(self.open_heap)
-            f_curr, g_curr, current, parent_data = current_data
+            _, _, current, _ = current_data
 
             if current.value == goal:
                 return current, self.open_list_length
@@ -98,7 +99,8 @@ class AStar:
                     h_val = self.heuristic_func(neighbor.value)
                     self.h_dict[neighbor] = h_val
                 f = neighbor.g + h_val
-                neighbor_data = [f, neighbor.g, neighbor, current_data]
+                fifo_queue_index += 1
+                neighbor_data = [f, fifo_queue_index, neighbor, current_data]
 
                 if neighbor not in self.open_dict:
                     self.open_dict[neighbor] = neighbor_data
@@ -108,19 +110,19 @@ class AStar:
                     old_neighbor_data = self.open_dict[neighbor]
                     if neighbor_data < old_neighbor_data:
                         old_neighbor_data[:] = neighbor_data
-                        heapq.heapify(self.open_dict)
+                        heapq.heapify(self.open_heap)
         else:
             start.path = []
             return 'Board: {}  is not a valid board'.format(start)
 
     def search_early_goal_test(self, start, goal):
-        start_data = [self.heuristic_func(start.value), 0, start, None]
+        fifo_queue_index = 0
+        start_data = [self.heuristic_func(start.value), fifo_queue_index, start, None]
         self.open_dict = {start: start_data}
         self.open_heap = [start_data]
-
         while self.open_heap:
             current_data = heapq.heappop(self.open_heap)
-            f_curr, g_curr, current, parent_data = current_data
+            _, _, current, _ = current_data
 
             if current.value == goal:
                 return current, self.open_list_length
@@ -141,9 +143,10 @@ class AStar:
                     h_val = self.heuristic_func(neighbor.value)
                     self.h_dict[neighbor] = h_val
                 f = neighbor.g + h_val
-                if self.suspected_goal is not None and self.suspected_goal!=neighbor and not f < self.suspected_goal.g:
+                if self.suspected_goal is not None and id(self.suspected_goal)!=id(neighbor) and not f < self.suspected_goal.g:
                     continue    # Early goal test - found a smaller path to goal not inserting neighbour to open list.
-                neighbor_data = [f, neighbor.g, neighbor, current_data]
+                fifo_queue_index += 1
+                neighbor_data = [f, fifo_queue_index, neighbor, current_data]
 
                 if neighbor not in self.open_dict:
                     self.open_dict[neighbor] = neighbor_data
@@ -153,7 +156,7 @@ class AStar:
                     old_neighbor_data = self.open_dict[neighbor]
                     if neighbor_data < old_neighbor_data:
                         old_neighbor_data[:] = neighbor_data
-                        heapq.heapify(self.open_dict)
+                        heapq.heapify(self.open_heap)
         else:
             start.path = []
             return 'Board: {}  is not a valid board'.format(start)
