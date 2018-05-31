@@ -1,0 +1,10 @@
+Staring calculation:
+Board number 1 is: ['11', '0', '4', '7', '2', '15', '1', '8', '5', '14', '9', '3', '13', '6', '12', '10']
+Goal Found! Length of path: 40 
+Time it took to calculate board num 1 is: 12.3142058849 seconds
+Size of open list is: 80563
+Board number 2 is: ['6', '5', '11', '4', '10', '13', '2', '1', '9', '15', '7', '3', '14', '12', '8', '0']
+Goal Found! Length of path: 41 
+Time it took to calculate board num 2 is: 547.343818903 seconds
+Size of open list is: 406071
+Board number 3 is: ['2', '8', '7', '11', '5', '0', '4', '15', '13', '9', '14', '3', '1', '10', '6', '12']

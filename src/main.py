@@ -8,10 +8,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def main():
-    file_path = dir_path + '/states15_b.d'
+    file_path = dir_path + '/1.d'
     goal = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
     try:
-        output = open("A_Star_Output_early_goal_test.output", "w")
+        output = open("early_2.output", "w")
         # output = open("A_Star_Output_late_goal_test.output", "w")
         output.write('Staring calculation:\n')
         with open(file_path, "r") as states_file:
