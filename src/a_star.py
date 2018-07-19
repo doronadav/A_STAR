@@ -26,6 +26,7 @@ class State(object):
         self.value = tuple(value)              # list representing the board
         self.closed = False
         self.blank_index = blank_index
+        self.h = self.calc_heuristic()
         if parent:
             self.path = parent.path[:]
             self.path.append(value)
@@ -58,6 +59,9 @@ class State(object):
             new_board[self.blank_index], new_board[self.blank_index + N] = new_board[self.blank_index + N], new_board[self.blank_index]
             yield State(value=new_board, blank_index=self.blank_index+N, parent=self)
 
+    def calc_heuristic(self):
+        return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(self.value) if val)
+
 
 class AStar:
 
@@ -69,94 +73,117 @@ class AStar:
         self.open_list_length = 1
         self.suspected_goal = None
 
-    def heuristic_func(self, board):
-        return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
-
+    # def heuristic_func(self, board):
+    #     return sum(abs((val - 1) % N - i % N) + abs((val - 1) // N - i // N) for i, val in enumerate(board) if val)
+    #
     def search_late_goal_test(self, start, goal):
         # For our case we must put a tuple in the queue to make sure
         # the get will return the state (board) with the smallest f.
-        fifo_queue_index = 0
-        start_data = [self.heuristic_func(start.value), fifo_queue_index, start, None]
-        self.open_dict = {start: start_data}
+        # fifo_index = 0
+        start_data = [start.h, 0, str(start.value)]
+        # start_data = [start.h, 0, fifo_index, str(start.value)]
+        self.open_dict = {str(start.value): start}
         self.open_heap = [start_data]
-
-        while self.open_heap:
-            current_data = heapq.heappop(self.open_heap)
-            _, _, current, _ = current_data
-
-            if current.value == goal:
-                return current, self.open_list_length
-
-            del self.open_dict[current]
-            self.closed_dict[current] = 1
-
-            for neighbor in current.calc_children():
-                if neighbor in self.closed_dict:
+        try:
+            while self.open_heap:
+                current_data = heapq.heappop(self.open_heap)
+                _, _, key = current_data
+                # _, _, _, key = current_data
+                current = self.open_dict.get(key)
+                if current is None:
                     continue
 
-                h_val = self.h_dict.get(neighbor, None)
-                if h_val is None:
-                    h_val = self.heuristic_func(neighbor.value)
-                    self.h_dict[neighbor] = h_val
-                f = neighbor.g + h_val
-                fifo_queue_index += 1
-                neighbor_data = [f, fifo_queue_index, neighbor, current_data]
+                if current.value == goal:
+                    return current, self.open_list_length
 
-                if neighbor not in self.open_dict:
-                    self.open_dict[neighbor] = neighbor_data
-                    heapq.heappush(self.open_heap, neighbor_data)
-                    self.open_list_length += 1
-                else:
-                    old_neighbor_data = self.open_dict[neighbor]
-                    if neighbor_data < old_neighbor_data:
-                        old_neighbor_data[:] = neighbor_data
-                        heapq.heapify(self.open_heap)
-        else:
-            start.path = []
-            return 'Board: {}  is not a valid board'.format(start)
+                del self.open_dict[key]
+                self.closed_dict[key] = 1
+
+                for neighbor in current.calc_children():
+                    key_neighbor = str(neighbor.value)
+                    if key_neighbor in self.closed_dict:
+                        continue
+
+                    # fifo_index += 1
+                    f = neighbor.g + neighbor.h
+                    neighbor_data = [f, neighbor.h, key_neighbor]
+                    # neighbor_data = [f, neighbor.h, fifo_index, key_neighbor]
+
+                    if key_neighbor not in self.open_dict:
+                        self.open_dict[key_neighbor] = neighbor
+                        heapq.heappush(self.open_heap, neighbor_data)
+                        self.open_list_length += 1
+                    else:
+                        old_neighbor = self.open_dict[key_neighbor]
+                        if neighbor.g < old_neighbor.g:
+                            self.open_dict[key_neighbor] = neighbor
+                            heapq.heappush(self.open_heap, neighbor_data)
+                            self.open_list_length += 1
+
+            else:
+                start.path = []
+                return 'Board: {}  is not a valid board'.format(start)
+        except Exception as e:
+            print e.message
 
     def search_early_goal_test(self, start, goal):
-        fifo_queue_index = 0
-        start_data = [self.heuristic_func(start.value), fifo_queue_index, start, None]
-        self.open_dict = {start: start_data}
+        # fifo_index = 0
+        start_data = [start.h, 0, str(start.value)]
+        # start_data = [start.h, 0, fifo_index, str(start.value)]
+        self.open_dict = {str(start.value): start}
         self.open_heap = [start_data]
-        while self.open_heap:
-            current_data = heapq.heappop(self.open_heap)
-            _, _, current, _ = current_data
-
-            if current.value == goal:
-                return current, self.open_list_length
-
-            del self.open_dict[current]
-            self.closed_dict[current] = 1
-
-            for neighbor in current.calc_children():
-                if neighbor in self.closed_dict:
+        try:
+            while self.open_heap:
+                current_data = heapq.heappop(self.open_heap)
+                _, _, key = current_data
+                # _, _, _, key = current_data
+                current = self.open_dict.get(key)
+                if current is None:
                     continue
 
-                if neighbor.value == goal:  # Early goal test
-                    if self.suspected_goal is None or neighbor.g < self.suspected_goal.g:
-                        self.suspected_goal = neighbor
+                if current.value == goal:
+                    return current, self.open_list_length
 
-                h_val = self.h_dict.get(neighbor, None)
-                if h_val is None:
-                    h_val = self.heuristic_func(neighbor.value)
-                    self.h_dict[neighbor] = h_val
-                f = neighbor.g + h_val
-                if self.suspected_goal is not None and id(self.suspected_goal)!=id(neighbor) and not f < self.suspected_goal.g:
-                    continue    # Early goal test - found a smaller path to goal not inserting neighbour to open list.
-                fifo_queue_index += 1
-                neighbor_data = [f, fifo_queue_index, neighbor, current_data]
+                del self.open_dict[key]
+                self.closed_dict[key] = 1
 
-                if neighbor not in self.open_dict:
-                    self.open_dict[neighbor] = neighbor_data
-                    heapq.heappush(self.open_heap, neighbor_data)
-                    self.open_list_length += 1
-                else:
-                    old_neighbor_data = self.open_dict[neighbor]
-                    if neighbor_data < old_neighbor_data:
-                        old_neighbor_data[:] = neighbor_data
-                        heapq.heapify(self.open_heap)
-        else:
-            start.path = []
-            return 'Board: {}  is not a valid board'.format(start)
+                for neighbor in current.calc_children():
+                    if str(neighbor.value) in self.closed_dict:
+                        continue
+
+                    if neighbor.value == goal:  # Early goal test
+                        if self.suspected_goal is None or neighbor.g < self.suspected_goal.g:
+                            self.suspected_goal = neighbor
+                            print 'suspected goal is {} with f: {}'.format(neighbor.value, neighbor.g)
+                            print self.open_heap
+                        else:
+                            print 'skipped bigger goal state {}'.format(neighbor.value)
+                            continue
+
+                    f = neighbor.g + neighbor.h
+                    if self.suspected_goal is not None and id(self.suspected_goal)!=id(neighbor) and not f < self.suspected_goal.g:
+                        print 'skiped state {}'.format(neighbor.value)
+                        continue
+
+                    # fifo_index += 1
+                    key_neighbor = str(neighbor.value)
+                    neighbor_data = [f, neighbor.h, key_neighbor]
+                    # neighbor_data = [f, neighbor.h, fifo_index, key_neighbor]
+
+                    if key_neighbor not in self.open_dict:
+                        self.open_dict[key_neighbor] = neighbor
+                        heapq.heappush(self.open_heap, neighbor_data)
+                        self.open_list_length += 1
+
+                    else:
+                        old_neighbor = self.open_dict[key_neighbor]
+                        if neighbor.g < old_neighbor.g:
+                            self.open_dict[key_neighbor] = neighbor
+                            heapq.heappush(self.open_heap, neighbor_data)
+                            self.open_list_length += 1
+
+            else:
+                start.path = []
+                return 'Board: {}  is not a valid board'.format(start)
+        except Exception as e:
+            print e.message

@@ -11,7 +11,7 @@ def main():
     file_path = dir_path + '/1.d'
     goal = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
     try:
-        output = open("early_2.output", "w")
+        output = open("bla-hadar.output", "w")
         # output = open("A_Star_Output_late_goal_test.output", "w")
         output.write('Staring calculation:\n')
         with open(file_path, "r") as states_file:
@@ -24,8 +24,8 @@ def main():
 
                 source = State(value=map(int, line_list), blank_index=line_list.index("0"), parent=None)
 
-                start = time.time()
                 algo = AStar()
+                start = time.time()
                 res_board, open_list_size = algo.search_early_goal_test(source, goal)
                 # res_board, open_list_size = algo.search_late_goal_test(source, goal)
                 end = time.time()

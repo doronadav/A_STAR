@@ -1,0 +1,41 @@
+Staring calculation:
+Board number 1 is: ['11', '0', '4', '7', '2', '15', '1', '8', '5', '14', '9', '3', '13', '6', '12', '10']
+Goal Found! Length of path: 40 
+Time it took to calculate board num 1 is: 0.569772005081 seconds
+Size of open list is: 16720
+Board number 2 is: ['6', '5', '11', '4', '10', '13', '2', '1', '9', '15', '7', '3', '14', '12', '8', '0']
+Goal Found! Length of path: 41 
+Time it took to calculate board num 2 is: 3.35060501099 seconds
+Size of open list is: 104928
+Board number 3 is: ['2', '8', '7', '11', '5', '0', '4', '15', '13', '9', '14', '3', '1', '10', '6', '12']
+Goal Found! Length of path: 43 
+Time it took to calculate board num 3 is: 13.5392260551 seconds
+Size of open list is: 371007
+Board number 4 is: ['14', '13', '5', '3', '0', '1', '8', '12', '6', '2', '4', '10', '11', '9', '15', '7']
+Goal Found! Length of path: 44 
+Time it took to calculate board num 4 is: 4.56398892403 seconds
+Size of open list is: 137438
+Board number 5 is: ['9', '2', '8', '11', '0', '5', '13', '7', '15', '1', '4', '10', '3', '14', '6', '12']
+Goal Found! Length of path: 46 
+Time it took to calculate board num 5 is: 8.3517780304 seconds
+Size of open list is: 235546
+Board number 6 is: ['6', '8', '4', '12', '7', '15', '10', '14', '0', '3', '2', '11', '1', '5', '9', '13']
+Goal Found! Length of path: 47 
+Time it took to calculate board num 6 is: 6.16924715042 seconds
+Size of open list is: 164556
+Board number 7 is: ['12', '4', '7', '0', '2', '10', '8', '3', '1', '15', '11', '14', '9', '6', '5', '13']
+Goal Found! Length of path: 48 
+Time it took to calculate board num 7 is: 71.5252511501 seconds
+Size of open list is: 1429485
+Board number 8 is: ['7', '4', '10', '8', '3', '13', '2', '14', '11', '5', '0', '15', '6', '1', '9', '12']
+Goal Found! Length of path: 49 
+Time it took to calculate board num 8 is: 18.9693908691 seconds
+Size of open list is: 509563
+Board number 9 is: ['13', '1', '10', '4', '8', '12', '6', '3', '15', '9', '5', '14', '0', '7', '2', '11']
+Goal Found! Length of path: 50 
+Time it took to calculate board num 9 is: 89.7623038292 seconds
+Size of open list is: 2122413
+Board number 10 is: ['2', '9', '3', '5', '8', '11', '12', '7', '15', '4', '0', '13', '6', '1', '10', '14']
+Goal Found! Length of path: 51 
+Time it took to calculate board num 10 is: 68.8033599854 seconds
+Size of open list is: 1678775
