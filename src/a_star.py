@@ -79,7 +79,7 @@ class AStar:
     def search_late_goal_test(self, start, goal):
         # For our case we must put a tuple in the queue to make sure
         # the get will return the state (board) with the smallest f.
-        # fifo_index = 0
+        #fifo_index = 0
         start_data = [start.h, 0, str(start.value)]
         # start_data = [start.h, 0, fifo_index, str(start.value)]
         self.open_dict = {str(start.value): start}
@@ -106,7 +106,7 @@ class AStar:
 
                     # fifo_index += 1
                     f = neighbor.g + neighbor.h
-                    neighbor_data = [f, neighbor.h, key_neighbor]
+                    neighbor_data = [f, neighbor.h, key_neighbor] # fifo_index % 20 instead of g
                     # neighbor_data = [f, neighbor.h, fifo_index, key_neighbor]
 
                     if key_neighbor not in self.open_dict:
@@ -128,6 +128,7 @@ class AStar:
 
     def search_early_goal_test(self, start, goal):
         # fifo_index = 0
+        skipped_nodes = 0
         start_data = [start.h, 0, str(start.value)]
         # start_data = [start.h, 0, fifo_index, str(start.value)]
         self.open_dict = {str(start.value): start}
@@ -142,6 +143,7 @@ class AStar:
                     continue
 
                 if current.value == goal:
+                    print skipped_nodes
                     return current, self.open_list_length
 
                 del self.open_dict[key]
@@ -155,19 +157,21 @@ class AStar:
                         if self.suspected_goal is None or neighbor.g < self.suspected_goal.g:
                             self.suspected_goal = neighbor
                             print 'suspected goal is {} with f: {}'.format(neighbor.value, neighbor.g)
-                            print self.open_heap
+                            #print self.open_heap
                         else:
-                            print 'skipped bigger goal state {}'.format(neighbor.value)
+                            print 'skipped bigger goal state {} with f: {}'.format(neighbor.value, neighbor.g)
+                            skipped_nodes += 1
                             continue
 
                     f = neighbor.g + neighbor.h
                     if self.suspected_goal is not None and id(self.suspected_goal)!=id(neighbor) and not f < self.suspected_goal.g:
-                        print 'skiped state {}'.format(neighbor.value)
+                        print 'skiped state {} with f {}'.format(neighbor.value, f)
+                        skipped_nodes += 1
                         continue
 
-                    # fifo_index += 1
+                    #fifo_index += 1
                     key_neighbor = str(neighbor.value)
-                    neighbor_data = [f, neighbor.h, key_neighbor]
+                    neighbor_data = [f, neighbor.g, key_neighbor] # fifo_index % 20
                     # neighbor_data = [f, neighbor.h, fifo_index, key_neighbor]
 
                     if key_neighbor not in self.open_dict:
